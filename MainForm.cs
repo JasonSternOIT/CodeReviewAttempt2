@@ -1,7 +1,5 @@
-using Microsoft.VisualBasic.Devices;
 using System.Drawing.Text;
-using System.IO;
-using System.Runtime.InteropServices;
+using System.Media;
 
 namespace CodeReview
 {
@@ -10,59 +8,145 @@ namespace CodeReview
         enum State
         {
             TitleScreen,
-            GamePlay
+            GamePlay,
+            GameOver
         }
         State state = State.TitleScreen;
 
-        enum BackgroundState
-        {
-            First,
-            Second,
-            Third,
-            Fourth
-        }
+        int currentScore = 0;
 
-        BackgroundState backgroundState = BackgroundState.First;
-
-        int updateBackgroundCount = 0;
+        int backgroundAnimationState = 0;
        
-        int miliFrame = 0;
-        int miliFrameDelay = 0;
+        int miliFrameIndex = 0;
 
         enum Food
         {
             Candy,
             Chips,
             Ramen,
-            Soda
+            Soda,
+            Lunchable,
+            Seaweed,
+            Mac
+        }
+        
+        struct Delays
+        {
+            public int updateBackground = 0;
+            public int miliFrame = 0;
+            public int candy = 0;
+            public int chips = 0;
+            public int ramen = 0;
+            public int soda = 0;
+            public int lunchable = 0;
+            public int seaweed = 0;
+            public int mac = 0;
+            public int fail = 0;
+
+            public Delays()
+            {
+            }
         }
 
-        int candyDelay = 0;
-        int chipsDelay = 0;
-        int ramenDelay = 0;
-        int sodaDelay = 0;
+        Delays delay = new Delays();
 
-        Random random = new Random();
+        readonly Random random = new();
 
-        DateTimeOffset start;
+        DateTimeOffset startTime;
+        DateTimeOffset endTime;
+
+        readonly Food[] snackTime;
+
+        SoundPlayer backgroundSound1;
+        SoundPlayer backgroundSound2;
+
+        Color[] backgroundColors = {
+            Color.HotPink,
+            Color.DeepPink,
+            Color.MediumVioletRed,
+            Color.Cyan,
+            Color.DarkTurquoise,
+            Color.Teal,
+            Color.HotPink,
+            Color.DeepPink,
+            Color.MediumVioletRed,
+            Color.Cyan,
+            Color.DarkTurquoise,
+            Color.Teal,
+            Color.HotPink,
+            Color.DeepPink,
+            Color.MediumVioletRed,
+            Color.Cyan,
+            Color.DarkTurquoise,
+            Color.Teal
+        };
+        List<PictureBox> backgroundObjects;
 
         public MainForm()
         {
+            snackTime = (Food[])Enum.GetValues(typeof(Food));
+
             InitializeComponent();
-            AllowTransparency = true;
-            TransparencyKey = Color.Black;
+
+            if(MessageBox.Show($"Transparency is broken layering PictureBox objects in WinForms.{Environment.NewLine}" +
+                $"Regardless, you will have graphical issues. Depending on what you have underneath," +
+                $"transparency might or might not lead to a more fun gaming experience.{Environment.NewLine}Enable?",
+                $"Enable Transparency?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                AllowTransparency = true;
+                TransparencyKey = Color.Black;
+            }
+            else
+            {
+                AllowTransparency = false;
+            }
+
             avatar.BringToFront();
             mili.BringToFront();
-            updateLoopTimer.Start();
-            transitionState(State.TitleScreen);
-            ramen.AutoSize = false;
+
             PrivateFontCollection privateFonts = new PrivateFontCollection();
             privateFonts.AddFontFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CFPunkAttitude-Regular.ttf"));
             score.Font = new Font(privateFonts.Families[0], 12);
             time.Font = score.Font;
+            gameOverFinalScore.Font = score.Font;
+            fail.Font = new Font(privateFonts.Families[0], 24);
+            clickToStart.Font = fail.Font;
+
+            try
+            {
+                backgroundSound1 = new SoundPlayer(@"looping-video-game-background-music-for-a-hungry-girl-searching-for-snacks-1.wav");
+                backgroundSound2 = new SoundPlayer(@"looping-video-game-background-music-for-a-hungry-girl-searching-for-snacks-2.wav");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading sound files: {ex.Message}");
+                throw;
+            }
+
+            backgroundObjects = [background1, background2, background3, background4, background5, background6];
+
+            TransitionState(State.TitleScreen);
+            updateLoopTimer.Start();
         }
 
-        void transitionState(State newState)
+        void SetSnackVisibility(bool visible)
+        {
+            foreach (Food snack in snackTime)
+            {
+                PictureBox foodObject = getFoodObjectInstance(snack);
+                foodObject.Visible = visible;
+            }
+        }
+
+        void setFailVisibility(bool visible)
+        {
+            fail.Visible = visible;
+            lightningLeft.Visible = visible;
+            lightningRight.Visible = visible;
+            delay.fail = visible ? 24 : 0;
+        }
+
+        void TransitionState(State newState)
         {
             state = newState;
             switch (state)
@@ -74,106 +158,176 @@ namespace CodeReview
                         title.Visible = true;
                         avatar.Visible = true;
                         mili.Visible = false;
-                        candy.Visible = false;
-                        chips.Visible = false;   
-                        ramen.Visible = false;
-                        soda.Visible = false;
+                        clickToStart.Visible = true;
+                        gameOverFinalScore.Visible = false;
+                        
+                        SetSnackVisibility(false);
                         Cursor.Show();
+                        backgroundSound2.Stop();
+                        backgroundSound1.PlayLooping();
                     }
                     break;
                 case State.GamePlay:
                     {
-                        start = DateTimeOffset.Now;
-                        score.Tag = 0;
+                        startTime = DateTimeOffset.Now;
+                        endTime = startTime.AddMinutes(1);
+                        currentScore = 0;                        
                         score.Visible = true;
                         time.Visible = true;
                         title.Visible = false;
                         avatar.Visible = false;
                         mili.Visible = true;
-                        candy.Visible = true;
-                        chips.Visible = true;
-                        ramen.Visible = true;
-                        soda.Visible = true;
-                        initializeFood(Food.Candy);
-                        initializeFood(Food.Chips);
-                        initializeFood(Food.Soda);
-                        initializeFood(Food.Ramen);
-                        updateScore();
+                        clickToStart.Visible = false;
+                        gameOverFinalScore.Visible = false; 
+                        foreach (Food snack in snackTime)
+                        {
+                            InitializeFood(snack);
+                        }
+                        SetSnackVisibility(true);
+
+                        UpdateScore();
+                        UpdateTimeRemaining();
 
                         Cursor.Hide();
+                        backgroundSound1.Stop();
+                        backgroundSound2.PlayLooping();
+                    }
+                    break;
+                case State.GameOver:
+                    {
+                        score.Visible = false;
+                        time.Visible = false;
+                        title.Visible = false;
+                        avatar.Visible = true;
+                        mili.Visible = false;
+                        clickToStart.Visible = false;
+                        gameOverFinalScore.Visible = true;
+                        SetSnackVisibility(false);
+                        UpdateGameOverFinalScore();
+                        Cursor.Show();
+                        backgroundSound2.Stop();
+                        backgroundSound1.PlayLooping();
                     }
                     break;
             }
+            setFailVisibility(false);
         }
 
-        private void updateScore()
+        private void UpdateScore()
         {
-            score.Text = $"Score: {(int)score.Tag}";
+            score.Text = $"Score: {currentScore}";
         }
 
-        void initializeFood(Food food)
+        private void UpdateGameOverFinalScore()
         {
-            PictureBox foodObject = null;
-            switch(food)
+            gameOverFinalScore.Text = $"GaMe OvEr{Environment.NewLine}Score: {currentScore}";
+        }
+
+        void InitializeFood(Food food)
+        {
+            PictureBox foodObject = getFoodObjectInstance(food);
+            if (foodObject == null)
             {
-                case Food.Candy:
-                    foodObject = candy;
-                    break;
-                case Food.Chips:
-                    foodObject = chips;
-                    break;
-                case Food.Ramen:
-                    foodObject = ramen;
-                    break;
-                case Food.Soda:
-                    foodObject = soda;
-                    break;
-                default:
-                    return;
+                return;
             }
             foodObject.Size = new Size(8, 8);
-            foodObject.Location = new Point (32 + (random.Next() % (Size.Width - 128)), 32 + (random.Next() % (Size.Height - 128)));
+            foodObject.Location = new Point(32 + (random.Next() % (Size.Width - 128)), 32 + (random.Next() % (Size.Height - 128)));
         }
 
-        void updateFood(Food food)
+        private PictureBox getFoodObjectInstance(Food food)
         {
-            PictureBox foodObject = null;
-            bool update = false;
+            PictureBox? foodObject = null;
             switch (food)
             {
                 case Food.Candy:
                     foodObject = candy;
-                    candyDelay++;
-                    if(candyDelay > 1)
-                    {
-                        candyDelay = 0;
-                        update = true;
-                    }    
                     break;
                 case Food.Chips:
                     foodObject = chips;
-                    chipsDelay++;
-                    if (chipsDelay > 2)
+                    break;
+                case Food.Ramen:
+                    foodObject = ramen;
+                    break;
+                case Food.Soda:
+                    foodObject = soda;
+                    break;
+                case Food.Lunchable:
+                    foodObject = lunchable;
+                    break;
+                case Food.Seaweed:
+                    foodObject = seaweed;
+                    break;
+                case Food.Mac:
+                    foodObject = mac;
+                    break;
+                default:
+                    break;
+            }
+
+#pragma warning disable CS8603 // Possible null reference return.
+            return foodObject;
+#pragma warning restore CS8603 // Possible null reference return.
+        }
+
+        void UpdateFood(Food food)
+        {
+            PictureBox foodObject = getFoodObjectInstance(food);
+            bool update = false;
+            switch (food)
+            {
+                case Food.Candy:
+                    delay.candy++;
+                    if (delay.candy > 1)
                     {
-                        chipsDelay = 0;
+                        delay.candy = 0;
+                        update = true;
+                    }
+                    break;
+                case Food.Chips:
+                    delay.chips++;
+                    if (delay.chips > 2)
+                    {
+                        delay.chips = 0;
                         update = true;
                     }
                     break;
                 case Food.Ramen:
-                    foodObject = ramen;
-                    ramenDelay++;
-                    if (ramenDelay > 3)
+                    delay.ramen++;
+                    if (delay.ramen > 3)
                     {
-                        ramenDelay = 0;
+                        delay.ramen = 0;
                         update = true;
                     }
                     break;
                 case Food.Soda:
-                    foodObject = soda;
-                    sodaDelay++;
-                    if (sodaDelay > 4)
+                    delay.soda++;
+                    if (delay.soda > 4)
                     {
-                        sodaDelay = 0;
+                        delay.soda = 0;
+                        update = true;
+                    }
+                    break;
+                case Food.Lunchable:
+                    delay.lunchable++;
+                    if (delay.lunchable > 5)
+                    {
+                        delay.lunchable = 0;
+                        update = true;
+                    }
+                    break;
+                case Food.Seaweed:
+                    delay.seaweed++;
+                    if (delay.seaweed > 6)
+                    {
+                        delay.seaweed = 0;
+                        update = true;
+                    }
+                    break;
+                case Food.Mac:
+                    delay.mac++;
+                    if (delay.mac > 7)
+                    {
+                        delay.mac = 0;
                         update = true;
                     }
                     break;
@@ -182,47 +336,56 @@ namespace CodeReview
             }
             if (update)
             {
-                foodObject.Size = new Size(foodObject.Size.Width + 2, foodObject.Size.Height + 2);
-                if (foodObject.Size.Width > 180)
-                {
-                    initializeFood(food);
-                }
-                else
-                {
-                    foodObject.Location = new Point(foodObject.Location.X - 1, foodObject.Location.Y - 1);
-                }
+                UpdateFoodSize(food, foodObject);
             }
-            if(foodObject.Size.Width > 128)
-            {
-                if(foodObject.Bounds.Contains(mili.Location))
-                {
-                    score.Tag = (int)score.Tag + 1;
-                    initializeFood(food);
-                }
-            }    
+            CollisionCheckFoodWithMili(food, foodObject);
         }
 
-        void updateMiliPosition()
+        private void CollisionCheckFoodWithMili(Food food, PictureBox foodObject)
+        {
+            if (foodObject.Size.Width > 128 && foodObject.Bounds.Contains(mili.Location))
+            {
+                currentScore += ((int)food + 1);
+                InitializeFood(food);
+            }
+        }
+
+        private void UpdateFoodSize(Food food, PictureBox foodObject)
+        {
+            foodObject.Size = new Size(foodObject.Size.Width + 2, foodObject.Size.Height + 2);
+            if (foodObject.Size.Width > 180)
+            {
+                currentScore--;
+                setFailVisibility(true);                
+                InitializeFood(food);
+            }
+            else
+            {
+                foodObject.Location = new Point(foodObject.Location.X - 1, foodObject.Location.Y - 1);
+            }
+        }
+
+        void UpdateMiliPosition()
         {
             mili.Location = PointToClient(Cursor.Position);
         }
 
-        void updateMiliFrame()
+        void UpdateMiliFrame()
         {
-            miliFrameDelay++;
-            if (miliFrameDelay >= 10)
+            delay.miliFrame++;
+            if (delay.miliFrame >= 10)
             {
-                miliFrameDelay = 0;
-                mili.Image = miliImages.Images[miliFrame];
-                miliFrame++;
-                if (miliFrame >= miliImages.Images.Count)
+                delay.miliFrame = 0;
+                mili.Image = miliImages.Images[miliFrameIndex];
+                miliFrameIndex++;
+                if (miliFrameIndex >= miliImages.Images.Count)
                 {
-                    miliFrame = 0;
+                    miliFrameIndex = 0;
                 }
             }
         }
 
-        private void updateLoopTimer_Tick(object sender, EventArgs e)
+        private void UpdateLoopTimer_Tick(object sender, EventArgs e)
         {
             switch (state)
             {
@@ -230,84 +393,80 @@ namespace CodeReview
                     {
                         if ((Control.MouseButtons & MouseButtons.Left) != 0)
                         {
-                            transitionState(State.GamePlay);
+                            TransitionState(State.GamePlay);
                         }
                     }
                     break;
                 case State.GamePlay:
                     {
-                        updateMiliPosition();
-                        updateMiliFrame();
-                        updateFood(Food.Candy);
-                        updateFood(Food.Chips);
-                        updateFood(Food.Ramen);
-                        updateFood(Food.Soda);
-                        updateScore();
-                        if(gameOver())
+                        UpdateMiliPosition();
+                        UpdateMiliFrame();
+                        foreach (Food snack in snackTime)
                         {
-                            transitionState(State.TitleScreen);
+                            UpdateFood(snack);
+                        }
+                        UpdateScore();
+                        UpdateTimeRemaining();
+                        UpdateFailMessage();
+                        if (GameOver())
+                        {
+                            TransitionState(State.GameOver);
+                        }
+                    }
+                    break;
+                case State.GameOver:
+                    {
+                        if ((Control.MouseButtons & MouseButtons.Left) != 0)
+                        {
+                            TransitionState(State.TitleScreen);
+                            Application.DoEvents();
+                            Thread.Sleep(5000);
                         }
                     }
                     break;
             }
 
-            updateBackground();
+            UpdateBackground();
         }
 
-        private bool gameOver()
+        private void UpdateFailMessage()
         {
-            var endTime = start.AddMinutes(1);
+            if (delay.fail > 0)
+            {
+                delay.fail--;
+                if (delay.fail == 0)
+                {
+                    setFailVisibility(false);
+                }
+            }
+        }
 
-            var timeRemaining = DateTimeOffset.Now - endTime;
-            time.Text = $"Time: {timeRemaining.Seconds}";
-
+        private bool GameOver()
+        {
             return (DateTimeOffset.Now > endTime);
         }
 
-        private void updateBackground()
+        private void UpdateTimeRemaining()
         {
-            updateBackgroundCount++;
-            if (updateBackgroundCount == 5)
+            var timeRemaining = DateTimeOffset.Now - endTime;
+            time.Text = $"Time: {timeRemaining.Seconds}";
+        }
+
+        private void UpdateBackground()
+        {
+            delay.updateBackground++;
+            if (delay.updateBackground == 5)
             {
-                updateBackgroundCount = 0;
-                switch (backgroundState)
+                delay.updateBackground = 0;
+                backgroundAnimationState++;
+                if (backgroundAnimationState >= backgroundObjects.Count)
                 {
-                    case BackgroundState.First:
-                        background1.BackColor = Color.HotPink;
-                        background2.BackColor = Color.DeepPink;
-                        background3.BackColor = Color.Cyan;
-                        background4.BackColor = Color.DarkTurquoise;
-                        background5.BackColor = Color.HotPink;
-                        background6.BackColor = Color.DeepPink;
-                        backgroundState = BackgroundState.Second;
-                        break;
-                    case BackgroundState.Second:
-                        background1.BackColor = Color.DarkTurquoise;
-                        background2.BackColor = Color.HotPink;
-                        background3.BackColor = Color.DeepPink;
-                        background4.BackColor = Color.Cyan;
-                        background5.BackColor = Color.DarkTurquoise;
-                        background6.BackColor = Color.HotPink;
-                        backgroundState = BackgroundState.Third;
-                        break;
-                    case BackgroundState.Third:
-                        background1.BackColor = Color.Cyan;
-                        background2.BackColor = Color.DarkTurquoise;
-                        background3.BackColor = Color.HotPink;
-                        background4.BackColor = Color.DeepPink;
-                        background5.BackColor = Color.Cyan;
-                        background6.BackColor = Color.DarkTurquoise;
-                        backgroundState = BackgroundState.Fourth;
-                        break;
-                    case BackgroundState.Fourth:
-                        background1.BackColor = Color.DeepPink;
-                        background2.BackColor = Color.Cyan;
-                        background3.BackColor = Color.DarkTurquoise;
-                        background4.BackColor = Color.HotPink;
-                        background5.BackColor = Color.DeepPink;
-                        background6.BackColor = Color.Cyan;
-                        backgroundState = BackgroundState.First;
-                        break;
+                    backgroundAnimationState = 0;
+                }
+                int colorOffset = backgroundAnimationState;
+                for (int backgroundIndex = 0; backgroundIndex < backgroundObjects.Count; colorOffset++, backgroundIndex++)
+                {
+                    backgroundObjects[backgroundIndex].BackColor = backgroundColors[colorOffset];
                 }
             }
         }
