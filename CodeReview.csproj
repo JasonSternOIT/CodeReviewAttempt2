@@ -29,4 +29,8 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy $(ProjectDir)sound $(OutDir) /Y" />
+  </Target>
+
 </Project>
