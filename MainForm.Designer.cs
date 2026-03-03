@@ -49,6 +49,14 @@
             chips = new PictureBox();
             score = new Label();
             time = new Label();
+            gameOverFinalScore = new Label();
+            fail = new Label();
+            clickToStart = new Label();
+            lightningLeft = new PictureBox();
+            lightningRight = new PictureBox();
+            seaweed = new PictureBox();
+            lunchable = new PictureBox();
+            mac = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)citySkyline).BeginInit();
             ((System.ComponentModel.ISupportInitialize)background1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)background2).BeginInit();
@@ -64,6 +72,11 @@
             ((System.ComponentModel.ISupportInitialize)soda).BeginInit();
             ((System.ComponentModel.ISupportInitialize)candy).BeginInit();
             ((System.ComponentModel.ISupportInitialize)chips).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)lightningLeft).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)lightningRight).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)seaweed).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)lunchable).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)mac).BeginInit();
             SuspendLayout();
             // 
             // citySkyline
@@ -134,7 +147,7 @@
             // updateLoopTimer
             // 
             updateLoopTimer.Interval = 16;
-            updateLoopTimer.Tick += updateLoopTimer_Tick;
+            updateLoopTimer.Tick += UpdateLoopTimer_Tick;
             // 
             // avatar
             // 
@@ -258,11 +271,114 @@
             time.TabIndex = 17;
             time.Text = "Time:";
             // 
+            // gameOverFinalScore
+            // 
+            gameOverFinalScore.AutoSize = true;
+            gameOverFinalScore.BackColor = Color.Transparent;
+            gameOverFinalScore.ForeColor = Color.Lime;
+            gameOverFinalScore.Location = new Point(545, 352);
+            gameOverFinalScore.Name = "gameOverFinalScore";
+            gameOverFinalScore.Size = new Size(406, 48);
+            gameOverFinalScore.TabIndex = 18;
+            gameOverFinalScore.Text = "Game Over - Final Score";
+            gameOverFinalScore.Visible = false;
+            // 
+            // fail
+            // 
+            fail.AutoSize = true;
+            fail.BackColor = Color.Transparent;
+            fail.ForeColor = Color.Yellow;
+            fail.Location = new Point(564, 354);
+            fail.Name = "fail";
+            fail.Size = new Size(106, 48);
+            fail.TabIndex = 19;
+            fail.Text = "fail!1!";
+            fail.Visible = false;
+            // 
+            // clickToStart
+            // 
+            clickToStart.AutoSize = true;
+            clickToStart.BackColor = Color.Transparent;
+            clickToStart.ForeColor = Color.Maroon;
+            clickToStart.Location = new Point(545, 411);
+            clickToStart.Name = "clickToStart";
+            clickToStart.Size = new Size(240, 48);
+            clickToStart.TabIndex = 20;
+            clickToStart.Text = "ClIcK tO sTaRt";
+            // 
+            // lightningLeft
+            // 
+            lightningLeft.BackColor = Color.Transparent;
+            lightningLeft.Image = Properties.Resources.lightning_left;
+            lightningLeft.Location = new Point(0, 0);
+            lightningLeft.Name = "lightningLeft";
+            lightningLeft.Size = new Size(170, 678);
+            lightningLeft.SizeMode = PictureBoxSizeMode.Zoom;
+            lightningLeft.TabIndex = 21;
+            lightningLeft.TabStop = false;
+            lightningLeft.Visible = false;
+            // 
+            // lightningRight
+            // 
+            lightningRight.BackColor = Color.Transparent;
+            lightningRight.Image = Properties.Resources.lightning_right;
+            lightningRight.Location = new Point(1159, 0);
+            lightningRight.Name = "lightningRight";
+            lightningRight.Size = new Size(170, 668);
+            lightningRight.SizeMode = PictureBoxSizeMode.Zoom;
+            lightningRight.TabIndex = 22;
+            lightningRight.TabStop = false;
+            lightningRight.Visible = false;
+            // 
+            // seaweed
+            // 
+            seaweed.BackColor = Color.Transparent;
+            seaweed.Image = (Image)resources.GetObject("seaweed.Image");
+            seaweed.Location = new Point(545, 145);
+            seaweed.Name = "seaweed";
+            seaweed.Size = new Size(152, 150);
+            seaweed.SizeMode = PictureBoxSizeMode.Zoom;
+            seaweed.TabIndex = 24;
+            seaweed.TabStop = false;
+            seaweed.Visible = false;
+            // 
+            // lunchable
+            // 
+            lunchable.BackColor = Color.Transparent;
+            lunchable.Image = (Image)resources.GetObject("lunchable.Image");
+            lunchable.Location = new Point(703, 145);
+            lunchable.Name = "lunchable";
+            lunchable.Size = new Size(152, 150);
+            lunchable.SizeMode = PictureBoxSizeMode.Zoom;
+            lunchable.TabIndex = 25;
+            lunchable.TabStop = false;
+            lunchable.Visible = false;
+            // 
+            // mac
+            // 
+            mac.BackColor = Color.Transparent;
+            mac.Image = (Image)resources.GetObject("mac.Image");
+            mac.Location = new Point(861, 145);
+            mac.Name = "mac";
+            mac.Size = new Size(152, 150);
+            mac.SizeMode = PictureBoxSizeMode.Zoom;
+            mac.TabIndex = 26;
+            mac.TabStop = false;
+            mac.Visible = false;
+            // 
             // MainForm
             // 
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.Black;
             ClientSize = new Size(1330, 665);
+            Controls.Add(mac);
+            Controls.Add(lunchable);
+            Controls.Add(seaweed);
+            Controls.Add(lightningRight);
+            Controls.Add(lightningLeft);
+            Controls.Add(clickToStart);
+            Controls.Add(fail);
+            Controls.Add(gameOverFinalScore);
             Controls.Add(time);
             Controls.Add(score);
             Controls.Add(chips);
@@ -302,6 +418,11 @@
             ((System.ComponentModel.ISupportInitialize)soda).EndInit();
             ((System.ComponentModel.ISupportInitialize)candy).EndInit();
             ((System.ComponentModel.ISupportInitialize)chips).EndInit();
+            ((System.ComponentModel.ISupportInitialize)lightningLeft).EndInit();
+            ((System.ComponentModel.ISupportInitialize)lightningRight).EndInit();
+            ((System.ComponentModel.ISupportInitialize)seaweed).EndInit();
+            ((System.ComponentModel.ISupportInitialize)lunchable).EndInit();
+            ((System.ComponentModel.ISupportInitialize)mac).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -327,5 +448,13 @@
         private PictureBox chips;
         private Label score;
         private Label time;
+        private Label gameOverFinalScore;
+        private Label fail;
+        private Label clickToStart;
+        private PictureBox lightningLeft;
+        private PictureBox lightningRight;
+        private PictureBox seaweed;
+        private PictureBox lunchable;
+        private PictureBox mac;
     }
 }
