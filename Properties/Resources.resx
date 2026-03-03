@@ -127,8 +127,14 @@
   <data name="avatar" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\img\avatar.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="lightning_left" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\img\lightning_left.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="ramen" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\img\ramen.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="chips" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\img\chips.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="15b3c017-a84a-4f3b-b5c3-6b0eb061edb0" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\img\15b3c017-a84a-4f3b-b5c3-6b0eb061edb0.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -139,7 +145,7 @@
   <data name="1x1Transparent" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\img\1x1Transparent.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="chips" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\img\chips.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="lightning_right" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\img\lightning_right.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
